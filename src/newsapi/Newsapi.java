@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.Scanner;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -77,12 +78,8 @@ public class Newsapi{
     public Newsapi()
     {
         
-        gettingapidata();   //calling this function to get data from api class
-
-        list=new JList(model);
         
-        for(int i=0;i<articlelist.size();i++)                         //Adding the items into jlist
-            model.addElement("->"+articlelist.get(i).getTitle());
+        initializelist();
        
         list.setSelectionBackground(Color.cyan);                      //Setting Backgroundcolor on selection of Jlist
         list.setFixedCellHeight(80);                                  //Setting maxHeight of Jlist
@@ -158,13 +155,18 @@ public class Newsapi{
                     }
                     else
                     {
-                        for(int i=0;i<articlelist.size();i++)
+                        int i=-1;
+                        for(i=0;i<articlelist.size();i++)
                         {
                             if(selectitemcombo.equals(articlelist.get(i).getTitle()))
                             {
                                 openwebsite(i);
                             }
                         }
+                        
+                        if(i==-1)
+                            readdatafromtempfile(selectitemcombo);
+                        
                     
                     }
           }
@@ -235,7 +237,9 @@ public class Newsapi{
         
         //for making each list items border
         list.setCellRenderer(new MyListCellRenderer());
-                
+        
+        
+       
         
         JLabel label=new JLabel("COVID-19 NEWS");   //Making the Jlabel for displaying Covid-19 news
         
@@ -251,10 +255,24 @@ public class Newsapi{
         JScrollPane scroll=new JScrollPane(list);   //Making the Scrollbar and adding Jlist into it
         scroll.setBounds(25, 100, 600, 500);        //Setting the boundation on scrollpane
         
+        JButton btnrefresh=new JButton("Refresh");
+        btnrefresh.setBounds(300, 18, 100, 25);
+        
+         ActionListener refreshlistener = new ActionListener() {
+      public void actionPerformed(ActionEvent actionEvent) {
+          if(actionEvent.getSource()==btnrefresh)
+              /*
+              new Refreshnews();
+              */
+              initializelist();
+        }
+      };
+        btnrefresh.addActionListener(refreshlistener);
         
         frame.add(label);   //Adding the label in JFrame
         frame.add(combo);
         frame.add(scroll);  //Adding the ScrollPane in JFrame
+        frame.add(btnrefresh);
         
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLayout(null);    
@@ -263,15 +281,27 @@ public class Newsapi{
         frame.setVisible(true);   //Making the Jframe visible
     }
     
+    public void initializelist()
+    {
+        gettingapidata();   //calling this function to get data from api class
+
+        list=new JList(model);
+        
+        for(int i=0;i<articlelist.size();i++)                         //Adding the items into jlist
+            model.addElement("->"+articlelist.get(i).getTitle());
+    }
+    
     //for opening a website
     private void openwebsite(int i)
     {
+        
         Desktop d=Desktop.getDesktop();
         try {
             d.browse(new URI(articlelist.get(i).getLink()));
         } catch (Exception ex) {
             ex.printStackTrace();
         } 
+        
     }
     
     
@@ -297,6 +327,36 @@ public class Newsapi{
     private void addtobookmark(int index)
     {
         combo.addItem(articlelist.get(index).getTitle());
+        //adding to temp file
+        addtotempfile(articlelist.get(index).getTitle(),articlelist.get(index).getLink());
+    }
+    
+    //addtotemporary file incase api is updated and in updated that link does not found
+    private void addtotempfile(String title,String link)
+    {
+        Tempflie tempfile=new Tempflie();
+        tempfile.writedata(title,link);    //adding data
+    }
+    
+    //reading from temp file if it is not found in current api data
+    private void readdatafromtempfile(String title)
+    {
+        Tempflie tempfile=new Tempflie();
+        String link=tempfile.readdata(title);    //getting data
+        if(link!=null)
+        openwebsitethroughlink(link);
+        
+    }
+    
+    //opening website thorough link
+    private void openwebsitethroughlink(String link)
+    {
+        Desktop d=Desktop.getDesktop();
+        try {
+            d.browse(new URI(link));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
     
     //adding item from file to combobox in offline mode
@@ -351,8 +411,9 @@ public class Newsapi{
     //MAIN FUNCTION
     public static void main(String[] args) {
         // TODO code application logic here
-        
+        /*
         new Refreshnews();
+                */
         SwingUtilities.invokeLater(Newsapi::new);
         
     }

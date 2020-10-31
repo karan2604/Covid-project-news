@@ -16,7 +16,9 @@ import java.util.Date;
 public class Refreshnews {
 
     public Refreshnews() {
+        /*
         timerclass();
+                */
     }
     
     
